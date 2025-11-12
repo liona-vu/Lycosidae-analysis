@@ -23,8 +23,7 @@ library(ggpubr) #Will need for statistical testing
 
 getwd()
 
-# Read TSV and standardize column names
-#__# LV: Reading in dataset.
+#Read in TSV file and standardize column name.
 lyco_full <- read_tsv("../data/lycosidae.tsv") %>% clean_names()
 
 #check data to see what you're working with 
@@ -140,7 +139,7 @@ table(lyco_cleaned$nuc_ranges)
 lyco_short <- lyco_cleaned[c(grep("Short", lyco_cleaned$nuc_ranges)), ] 
 
 ##--## LV Can use dplyr to make new dataframe same as above, up to you :)
-lyco_short_test <- lyco_cleaned %>%
+lyco_short <- lyco_cleaned %>%
   filter(nuc_ranges == "Short")
 
 # Count contributions by depositor for short sequences
@@ -230,7 +229,7 @@ ggplot(marker_plot_data, aes(x = marker_code, y = nuc_scrubbed_count, fill = mar
     legend.position = "none",
     axis.text.x = element_text(angle = 45, hjust = 1))
 
-##--## LV p-value is p<2.2e-16, therefore, should accept hypothesis and reject null hypothesis
+##--## LV p-value is p<2.2e-16, so statistically should reject null hypothesis
 
 ## ===================================== ##
 ##  Graph 3: Heatmap                     
@@ -245,8 +244,6 @@ summary(lyco_coi$nuc_scrubbed_count)
 table(cut(lyco_coi$nuc_scrubbed_count, 
           breaks = c(seq(from = 600, to = 650, by = 10), 655, seq(from = 660, to = 700, by = 10))))
 
-#More reproducible way to do this is split into quartiles
-#check random forest
 breaks <- c(0, 500, 600, 650, 700, 800, Inf)
 labels <- c("0–500","500–600","600–650", "650–700","700–800","800+")
 
@@ -258,7 +255,7 @@ top4 <- lyco_coi %>%
 
 # Create the summarized dataframe used for plotting the heatmap: Assign each sequence to a length_bin using the cut() function. Create a new column 'inst_grouped' that labels each depositor as either one of the top four or as "Other". Count how many sequences each depositor contributed to each bin (n). Convert those counts into proportions within each depositor row (so rows will sum to 1). This normalizes differences in total submissions.
 heatmap_df <- lyco_coi %>%
-  mutate(length_bin = cut(nuc_scrubbed_count, breaks = quartiles, labels = labels, right = FALSE),
+  mutate(length_bin = cut(nuc_scrubbed_count, breaks = breaks, labels = labels, right = FALSE),
          inst_grouped = ifelse(depo_short %in% top4, depo_short, "Other")) %>%
   group_by(inst_grouped, length_bin) %>%
   summarise(n = n(), .groups = "drop") %>%
