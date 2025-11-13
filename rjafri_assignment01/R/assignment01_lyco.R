@@ -244,8 +244,24 @@ summary(lyco_coi$nuc_scrubbed_count)
 table(cut(lyco_coi$nuc_scrubbed_count, 
           breaks = c(seq(from = 600, to = 650, by = 10), 655, seq(from = 660, to = 700, by = 10))))
 
-breaks <- c(0, 500, 600, 650, 700, 800, Inf)
-labels <- c("0–500","500–600","600–650", "650–700","700–800","800+")
+#Checking the min and max values of nuc_scrubbed_count before making our breaks
+min(lyco_coi$nuc_scrubbed_count) #172
+max(lyco_coi$nuc_scrubbed_count) #1552
+
+#Generating break values for our heatmap, quantile method would be more dynamic, unique is needed here, else there will be duplicate quantile values and will cause an error when plotting heatmap
+breaks <- unique(quantile(lyco_coi$nuc_scrubbed_count, probs = seq(from= 0, to = 1, 0.1), Inf))
+
+#Use a for loop to generate the labels needed for heat map
+#Create empty vector to be added to
+labels <-c() 
+for (i in seq_along(breaks)) {
+  start <- breaks[i]
+  end <- breaks[i+1]
+  labels[i] <- paste(start, "-", end)
+}
+
+#Removes the last NA value in the vector
+labels <- labels[-length(labels)]
 
 # Identify the top 4 depositories by total number of COI-5P records. These will be highlighted as individual rows; all others grouped as "Other".
 top4 <- lyco_coi %>%
@@ -261,7 +277,8 @@ heatmap_df <- lyco_coi %>%
   summarise(n = n(), .groups = "drop") %>%
   group_by(inst_grouped) %>%
   mutate(prop = n / sum(n)) %>%
-  ungroup()
+  ungroup() %>%
+  na.omit() ## Added to filter any NA values
 
 # Plot the normalized data as a heatmap.
 ggplot(heatmap_df, aes(x = length_bin, y = inst_grouped, fill = prop)) +
